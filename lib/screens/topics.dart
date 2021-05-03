@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/services.dart';
 import '../shared/shared.dart';
-import 'package:fireship/screens/screens.dart';
+import '../screens/screens.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class TopicsScreen extends StatelessWidget {

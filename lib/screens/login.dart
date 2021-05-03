@@ -1,6 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fireship/screens/about.dart';
-import 'package:fireship/screens/topics.dart';
 import 'package:fireship/services/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -15,11 +12,13 @@ class LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    auth.getUser.then((user) {
-      if (user != null) {
-        Navigator.pushReplacementNamed(context, '/topics');
-      }
-    });
+    auth.getUser.then(
+      (user) {
+        if (user != null) {
+          Navigator.pushReplacementNamed(context, '/topics');
+        }
+      },
+    );
   }
 
   @override

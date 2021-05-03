@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fireship/services/auth.dart';
+import 'package:fireship/services/models.dart';
+import 'package:fireship/shared/shared.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,7 +10,8 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var user = Provider.of<User>(context);
+    Report report = Provider.of<Report>(context);
+    User user = Provider.of<User>(context);
 
     if (user != null) {
       return Scaffold(
@@ -41,6 +44,12 @@ class ProfileScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.headline3,
               ),
               Spacer(),
+              if (report != null)
+                Text('${report.total ?? 0}',
+                    style: Theme.of(context).textTheme.display3),
+              Text('Quizzes Completed',
+                  style: Theme.of(context).textTheme.subhead),
+              Spacer(),
               FlatButton(
                   child: Text('logout'),
                   color: Colors.red,
@@ -55,7 +64,7 @@ class ProfileScreen extends StatelessWidget {
         ),
       );
     } else {
-      return Text('not logged in...');
+      return LoadingScreen();
     }
   }
 }
