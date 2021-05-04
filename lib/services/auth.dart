@@ -47,6 +47,26 @@ class AuthService {
     return user;
   }
 
+  // Sign In with Email & Password
+  Future<User> signInEmailPassword(String email, String password) async {
+    UserCredential result = await _auth.signInWithEmailAndPassword(
+        email: email, password: password);
+    User user = result.user;
+
+    updateUserData(user);
+    return user;
+  }
+
+  // Create User with Email & Password
+  Future<User> createUserEmailPassword(String email, String password) async {
+    UserCredential result = await _auth.createUserWithEmailAndPassword(
+        email: email, password: password);
+    User user = result.user;
+
+    updateUserData(user);
+    return user;
+  }
+
   // update on new log
   Future<void> updateUserData(User user) {
     DocumentReference reportRef = _db.collection('reports').doc(user.uid);

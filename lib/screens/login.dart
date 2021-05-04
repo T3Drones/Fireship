@@ -2,12 +2,47 @@ import 'package:fireship/services/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+enum EmailSignInFormType { signIn, register }
+
 class LoginScreen extends StatefulWidget {
   createState() => LoginScreenState();
 }
 
 class LoginScreenState extends State<LoginScreen> {
   AuthService auth = AuthService();
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  String get _email => _emailController.text;
+  String get _password => _passwordController.text;
+  EmailSignInFormType _formType = EmailSignInFormType.signIn;
+
+  void _toggleFormType() {
+    setState(() {
+      _formType = _formType == EmailSignInFormType.signIn
+          ? EmailSignInFormType.register
+          : EmailSignInFormType.signIn;
+    });
+    _emailController.clear();
+    _passwordController.clear();
+  }
+
+  void submit() async {
+    try {
+      if (_formType == EmailSignInFormType.signIn) {
+        await auth.signInEmailPassword(_email, _password);
+      } else {
+        await auth.createUserEmailPassword(_email, _password);
+      }
+    } catch (e) {
+      print(e.toString());
+    }
+    auth.getUser.then((user) {
+      if (user != null) {
+        Navigator.pushReplacementNamed(context, '/topics');
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -23,6 +58,12 @@ class LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final primaryText = _formType == EmailSignInFormType.signIn
+        ? 'Sign in'
+        : 'Create an account';
+    final secondaryText = _formType == EmailSignInFormType.signIn
+        ? 'Need an account? Register'
+        : 'Have an account? Sign in';
     return Scaffold(
       body: Container(
         padding: EdgeInsets.all(30),
@@ -32,7 +73,7 @@ class LoginScreenState extends State<LoginScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             FlutterLogo(
-              size: 150,
+              size: 100,
             ),
             Text(
               'Login to Start',
@@ -46,7 +87,29 @@ class LoginScreenState extends State<LoginScreen> {
               color: Colors.black45,
               loginMethod: auth.googleSignIn,
             ),
-            LoginButton(text: 'Continue as Guest', loginMethod: auth.anonLogin)
+            LoginButton(text: 'Continue as Guest', loginMethod: auth.anonLogin),
+            TextField(
+              controller: _emailController,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                hintText: 'test@test.com',
+              ),
+            ),
+            TextField(
+              controller: _passwordController,
+              decoration: InputDecoration(
+                labelText: 'Password',
+              ),
+              obscureText: true,
+            ),
+            FlatButton(
+              child: Text(primaryText),
+              onPressed: submit,
+            ),
+            FlatButton(
+              child: Text(secondaryText),
+              onPressed: _toggleFormType,
+            ),
           ],
         ),
       ),
