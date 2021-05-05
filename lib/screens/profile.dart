@@ -1,12 +1,27 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fireship/services/auth.dart';
 import 'package:fireship/services/models.dart';
+import 'package:fireship/shared/alert_dialog.dart';
 import 'package:fireship/shared/shared.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   final AuthService auth = AuthService();
+
+  Future<void> _confirmSignOut(BuildContext context) async {
+    final didRequestSignOut = await showAlertDialog(
+      context,
+      title: 'Logout',
+      content: 'Are you sure that you want to logout?',
+      cancelActionText: 'Cancel',
+      defaultActionText: 'Logout',
+    );
+    if (didRequestSignOut == true) {
+      await auth.signOut();
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,13 +66,10 @@ class ProfileScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.subhead),
               Spacer(),
               FlatButton(
-                  child: Text('logout'),
-                  color: Colors.red,
-                  onPressed: () async {
-                    await auth.signOut();
-                    Navigator.of(context)
-                        .pushNamedAndRemoveUntil('/', (route) => false);
-                  }),
+                child: Text('logout'),
+                color: Colors.red,
+                onPressed: () => _confirmSignOut(context),
+              ),
               Spacer()
             ],
           ),
