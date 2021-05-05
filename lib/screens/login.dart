@@ -1,10 +1,16 @@
+import 'dart:ffi';
+import 'dart:io';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fireship/services/auth.dart';
+import 'package:fireship/shared/exception_alert_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:fireship/services/validators.dart';
 
 enum EmailSignInFormType { signIn, register }
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends StatefulWidget with EmailAndPasswordalidators {
   createState() => LoginScreenState();
 }
 
@@ -13,12 +19,25 @@ class LoginScreenState extends State<LoginScreen> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
   String get _email => _emailController.text;
   String get _password => _passwordController.text;
   EmailSignInFormType _formType = EmailSignInFormType.signIn;
+  bool _submitted = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    super.dispose();
+  }
 
   void _toggleFormType() {
     setState(() {
+      _submitted = false;
       _formType = _formType == EmailSignInFormType.signIn
           ? EmailSignInFormType.register
           : EmailSignInFormType.signIn;
@@ -27,15 +46,29 @@ class LoginScreenState extends State<LoginScreen> {
     _passwordController.clear();
   }
 
-  void submit() async {
+  void _emailEditingComplete() {
+    final newFocus = widget.emailValidator.isValid(_email)
+        ? _passwordFocusNode
+        : _emailFocusNode;
+    FocusScope.of(context).requestFocus(newFocus);
+  }
+
+  void _submit() async {
+    setState(() {
+      _submitted = true;
+    });
     try {
       if (_formType == EmailSignInFormType.signIn) {
         await auth.signInEmailPassword(_email, _password);
       } else {
         await auth.createUserEmailPassword(_email, _password);
       }
-    } catch (e) {
-      print(e.toString());
+    } on FirebaseAuthException catch (e) {
+      showExceptionAlertDialog(
+        context,
+        title: 'Sign in failed',
+        exception: e,
+      );
     }
     auth.getUser.then((user) {
       if (user != null) {
@@ -58,6 +91,12 @@ class LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool submitEnabled = widget.emailValidator.isValid(_email) &&
+        widget.passwordValidator.isValid(_password);
+    bool emailValid = _submitted && !widget.emailValidator.isValid(_email);
+    bool passwordValid =
+        _submitted && !widget.passwordValidator.isValid(_password);
+
     final primaryText = _formType == EmailSignInFormType.signIn
         ? 'Sign in'
         : 'Create an account';
@@ -90,21 +129,29 @@ class LoginScreenState extends State<LoginScreen> {
             LoginButton(text: 'Continue as Guest', loginMethod: auth.anonLogin),
             TextField(
               controller: _emailController,
+              onEditingComplete: _emailEditingComplete,
+              focusNode: _emailFocusNode,
+              onChanged: (email) => _updateState(),
               decoration: InputDecoration(
                 labelText: 'Email',
                 hintText: 'test@test.com',
+                errorText: emailValid ? widget.invalidEmailErrorText : null,
               ),
             ),
             TextField(
               controller: _passwordController,
               decoration: InputDecoration(
                 labelText: 'Password',
+                errorText:
+                    passwordValid ? widget.invalidPasswordErrorText : null,
               ),
               obscureText: true,
+              onChanged: (password) => _updateState(),
+              focusNode: _passwordFocusNode,
             ),
             FlatButton(
               child: Text(primaryText),
-              onPressed: submit,
+              onPressed: submitEnabled ? _submit : null,
             ),
             FlatButton(
               child: Text(secondaryText),
@@ -114,6 +161,10 @@ class LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  _updateState() {
+    setState(() {});
   }
 }
 
